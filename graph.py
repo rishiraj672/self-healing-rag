@@ -20,7 +20,7 @@ import os
 from typing import Literal
 from typing_extensions import TypedDict
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 
@@ -59,7 +59,7 @@ def retrieve(state: RAGState) -> dict:
 
 def generate(state: RAGState) -> dict:
     print(f"\n[generate] question='{state['question']}'")
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOllama(model="llama3.2", temperature=0)
     context = "\n\n---\n\n".join(state["retrieved_docs"])
 
     messages = [
@@ -79,7 +79,7 @@ def generate(state: RAGState) -> dict:
 
 def critique(state: RAGState) -> dict:
     print(f"\n[critique] evaluating grounding …")
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOllama(model="llama3.2", temperature=0)
     context = "\n\n---\n\n".join(state["retrieved_docs"])
 
     messages = [
@@ -119,7 +119,7 @@ def rewrite_query(state: RAGState) -> dict:
         print(f"[rewrite_query] max retries exceeded → giving up")
         return {"retry_count": retry_count, "verdict": "give_up"}
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+    llm = ChatOllama(model="llama3.2", temperature=0)
     messages = [
         SystemMessage(content=(
             "You are a search-query optimizer. Given an original question and "

@@ -12,7 +12,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 
 load_dotenv()
@@ -24,7 +24,7 @@ COLLECTION_NAME = "rag_documents"
 
 def get_vector_store() -> Chroma:
     """Return the persisted ChromaDB vector store (used by graph.py)."""
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OllamaEmbeddings(model="nomic-embed-text")
     return Chroma(
         collection_name=COLLECTION_NAME,
         embedding_function=embeddings,
