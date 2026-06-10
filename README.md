@@ -2,6 +2,8 @@
 
 A stateful, cyclical Retrieval-Augmented Generation pipeline built with **LangGraph**. Unlike a linear chain, this system critiques its own answers and retries with a rewritten query when the answer isn't grounded in the source documents.
 
+Runs **fully locally** via [Ollama](https://ollama.com) — no API keys or internet connection required after setup.
+
 ## How it works
 
 ```
@@ -22,8 +24,8 @@ START → retrieve → generate → critique
 | Node | Role |
 |---|---|
 | `retrieve` | Queries ChromaDB for top-4 chunks matching the current query |
-| `generate` | GPT-4o-mini answers using **only** the retrieved context |
-| `critique` | A second GPT-4o-mini call checks every claim; emits `GROUNDED` or `NOT_GROUNDED` |
+| `generate` | `llama3.2` answers using **only** the retrieved context |
+| `critique` | A second `llama3.2` call checks every claim; emits `GROUNDED` or `NOT_GROUNDED` |
 | `rewrite_query` | Rewrites the search query using original question + critic feedback; tracks retries |
 | `final_answer` | Passes through grounded answer, or returns a graceful refusal on give-up |
 
@@ -33,28 +35,34 @@ START → retrieve → generate → critique
 
 ## Setup
 
-### 1. Install dependencies
+### 1. Install Ollama
+Download from **https://ollama.com/download** or run:
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+### 2. Pull the required models
+```bash
+ollama pull llama3.2          # LLM for generate, critique, rewrite_query
+ollama pull nomic-embed-text  # Embeddings for ChromaDB
+```
+
+### 3. Install Python dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Configure environment
-```bash
-cp .env.example .env
-# Edit .env and set your OPENAI_API_KEY
-```
-
-### 3. Add your documents
+### 4. Add your documents
 Drop `.txt` or `.md` files into the `docs/` folder (any depth).
 
-### 4. Ingest documents
+### 5. Ingest documents
 ```bash
 python ingest.py
 # or point to a different folder:
 python ingest.py ./my-docs
 ```
 
-This chunks the documents with `RecursiveCharacterTextSplitter` (1000 chars, 200 overlap), embeds them with `text-embedding-3-small`, and persists the index to ChromaDB.
+This chunks the documents with `RecursiveCharacterTextSplitter` (1000 chars, 200 overlap), embeds them with `nomic-embed-text`, and persists the index to ChromaDB.
 
 ---
 
@@ -70,7 +78,7 @@ python main.py "What is the refund policy?"
 python main.py
 ```
 
-**Run mock tests (no API key needed):**
+**Run mock tests (Ollama not required):**
 ```bash
 python test_graph.py
 ```
@@ -96,19 +104,19 @@ python test_graph.py
 
 | Variable | Default | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | — | Required. Your OpenAI API key |
 | `DOCS_DIR` | `./docs` | Folder containing source documents |
 | `CHROMA_PERSIST_DIR` | `./chroma_db` | Where ChromaDB stores its index |
+
+No API key required — all inference runs locally via Ollama.
 
 ---
 
 ## Dependencies
 
 - `langgraph` — stateful graph runtime
-- `langchain-openai` — GPT-4o-mini and text-embedding-3-small
+- `langchain-ollama` — `llama3.2` (LLM) and `nomic-embed-text` (embeddings)
 - `langchain-chroma` — ChromaDB vector store integration
 - `langchain-text-splitters` — `RecursiveCharacterTextSplitter`
 - `langchain-community` — `TextLoader`
 - `chromadb` — on-disk vector database
 - `python-dotenv` — `.env` loading
-- `tiktoken` — token counting for OpenAI models
